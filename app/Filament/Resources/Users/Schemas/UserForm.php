@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Enums\UserRole;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -22,15 +23,28 @@ class UserForm
                     ->required()
                     ->placeholder('email@example.com'),
                 Select::make('role')
-                    ->options([
-                        'super_admin' => 'Super Admin',
-                        'property_manager' => 'Property Manager',
-                        'accountant' => 'Accountant',
-                        'agent' => 'Agent',
-                        'owner' => 'Property Owner',
-                        'tenant' => 'Tenant',
-                    ])
-                    ->default('tenant')
+                    ->options(function (): array {
+                        $user = auth()->user();
+
+                        if (! $user) {
+                            return [];
+                        }
+
+                        return match ($user->role) {
+                            UserRole::SuperAdmin => [
+                                UserRole::Owner->value => 'Property Owner',
+                            ],
+                            UserRole::Owner => [
+                                UserRole::PropertyManager->value => 'Property Manager',
+                                UserRole::Accountant->value => 'Accountant',
+                                UserRole::Tenant->value => 'Tenant',
+                            ],
+                            UserRole::PropertyManager => [
+                                UserRole::Tenant->value => 'Tenant',
+                            ],
+                            default => [],
+                        };
+                    })
                     ->required()
                     ->native(false),
                 Select::make('kyc_status')
@@ -46,7 +60,7 @@ class UserForm
                 TextInput::make('password')
                     ->password()
                     ->dehydrated(fn ($state) => filled($state))
-                    ->required(fn (string $operation): bool => $operation === 'create')
+                    ->hiddenOn('create')
                     ->placeholder('••••••••'),
                 KeyValue::make('kyc_data')
                     ->label('KYC Document & Metadata')
