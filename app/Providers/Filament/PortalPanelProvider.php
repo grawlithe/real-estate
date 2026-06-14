@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Portal\Widgets\OwnerDashboardOverview;
+use App\Filament\Portal\Widgets\TenantRentStatus;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -11,7 +13,6 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -26,6 +27,7 @@ class PortalPanelProvider extends PanelProvider
         return $panel
             ->id('portal')
             ->path('portal')
+            ->viteTheme('resources/css/filament/portal/theme.css')
             ->login()
             ->brandName('Apex Client Portal')
             ->colors([
@@ -40,8 +42,8 @@ class PortalPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Portal/Widgets'), for: 'App\Filament\Portal\Widgets')
             ->widgets([
                 AccountWidget::class,
-                \App\Filament\Portal\Widgets\OwnerDashboardOverview::class,
-                \App\Filament\Portal\Widgets\TenantRentStatus::class,
+                OwnerDashboardOverview::class,
+                TenantRentStatus::class,
             ])
             ->middleware([
                 EncryptCookies::class,
