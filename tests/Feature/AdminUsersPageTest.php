@@ -14,6 +14,6 @@ test('super admin can access users index', function () {
     User::factory()->count(2)->create();
 
     $this->actingAs($admin)
-        ->get('/admin/users')
+        ->get('/platform/users')
         ->assertSuccessful();
 });

@@ -9,10 +9,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-#[Fillable(['lease_id', 'tenant_id', 'invoice_number', 'due_date', 'amount_due', 'amount_paid', 'status', 'type', 'late_fee_applied', 'notes'])]
+#[Fillable(['lease_id', 'tenant_id', 'invoice_number', 'due_date', 'amount_due', 'amount_paid', 'status', 'type', 'late_fee_applied', 'notes', 'company_id'])]
 class Invoice extends Model
 {
     use HasFactory;
+
+    /**
+     * Get the company that owns the invoice.
+     *
+     * @return BelongsTo<Company, $this>
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     /**
      * Get the lease.

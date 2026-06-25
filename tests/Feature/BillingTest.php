@@ -2,28 +2,38 @@
 
 use App\Enums\UserRole;
 use App\Filament\Portal\Resources\Invoices\Pages\ListInvoices;
+use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Lease;
 use App\Models\Payment;
 use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
 test('tenant can pay their invoice through portal table action', function () {
+    $company = Company::create([
+        'name' => 'Apex Management',
+        'slug' => 'apex-management',
+    ]);
+
     $tenant = User::factory()->create([
         'role' => UserRole::Tenant,
     ]);
+    $company->users()->attach($tenant);
 
     $property = Property::create([
+        'company_id' => $company->id,
         'name' => 'Ayala Heights',
         'address' => 'Makati',
     ]);
 
     $unit = Unit::create([
+        'company_id' => $company->id,
         'property_id' => $property->id,
         'unit_number' => '101',
         'type' => 'condo',
@@ -34,6 +44,7 @@ test('tenant can pay their invoice through portal table action', function () {
     ]);
 
     $lease = Lease::create([
+        'company_id' => $company->id,
         'unit_id' => $unit->id,
         'tenant_id' => $tenant->id,
         'start_date' => '2026-01-01',
@@ -44,6 +55,7 @@ test('tenant can pay their invoice through portal table action', function () {
     ]);
 
     $invoice = Invoice::create([
+        'company_id' => $company->id,
         'lease_id' => $lease->id,
         'tenant_id' => $tenant->id,
         'invoice_number' => 'INV-TEST-101',
@@ -55,6 +67,8 @@ test('tenant can pay their invoice through portal table action', function () {
     ]);
 
     $this->actingAs($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('portal'));
+    Filament::setTenant($company);
 
     Livewire::test(ListInvoices::class)
         ->callTableAction('pay', $invoice, data: [

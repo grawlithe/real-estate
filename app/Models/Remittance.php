@@ -7,10 +7,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['owner_id', 'unit_id', 'remittance_date', 'amount', 'status', 'pdf_path'])]
+#[Fillable(['owner_id', 'unit_id', 'remittance_date', 'amount', 'status', 'pdf_path', 'company_id'])]
 class Remittance extends Model
 {
     use HasFactory;
+
+    /**
+     * Get the company that owns the remittance.
+     *
+     * @return BelongsTo<Company, $this>
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     /**
      * Get the owner.

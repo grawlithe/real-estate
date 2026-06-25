@@ -2,27 +2,37 @@
 
 use App\Enums\UserRole;
 use App\Filament\Portal\Resources\MaintenanceRequests\Pages\CreateMaintenanceRequest;
+use App\Models\Company;
 use App\Models\Lease;
 use App\Models\MaintenanceRequest;
 use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
 test('tenant can submit a maintenance request', function () {
+    $company = Company::create([
+        'name' => 'Apex Management',
+        'slug' => 'apex-management',
+    ]);
+
     $tenant = User::factory()->create([
         'role' => UserRole::Tenant,
     ]);
+    $company->users()->attach($tenant);
 
     $property = Property::create([
+        'company_id' => $company->id,
         'name' => 'Ayala Heights',
         'address' => 'Makati',
     ]);
 
     $unit = Unit::create([
+        'company_id' => $company->id,
         'property_id' => $property->id,
         'unit_number' => '101',
         'type' => 'condo',
@@ -33,6 +43,7 @@ test('tenant can submit a maintenance request', function () {
     ]);
 
     $lease = Lease::create([
+        'company_id' => $company->id,
         'unit_id' => $unit->id,
         'tenant_id' => $tenant->id,
         'start_date' => '2026-01-01',
@@ -43,6 +54,8 @@ test('tenant can submit a maintenance request', function () {
     ]);
 
     $this->actingAs($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('portal'));
+    Filament::setTenant($company);
 
     Livewire::test(CreateMaintenanceRequest::class)
         ->fillForm([

@@ -8,10 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-#[Fillable(['invoice_id', 'amount', 'payment_date', 'payment_method', 'transaction_reference', 'proof_of_payment', 'status'])]
+#[Fillable(['invoice_id', 'amount', 'payment_date', 'payment_method', 'transaction_reference', 'proof_of_payment', 'status', 'company_id'])]
 class Payment extends Model
 {
     use HasFactory;
+
+    /**
+     * Get the company that owns the payment.
+     *
+     * @return BelongsTo<Company, $this>
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     /**
      * Get the invoice.

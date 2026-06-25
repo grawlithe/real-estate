@@ -10,10 +10,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['property_id', 'unit_number', 'type', 'status', 'ownership_type', 'rent_amount', 'security_deposit'])]
+#[Fillable(['property_id', 'unit_number', 'type', 'status', 'ownership_type', 'rent_amount', 'security_deposit', 'company_id'])]
 class Unit extends Model
 {
     use HasFactory;
+
+    /**
+     * Get the company that owns the unit.
+     *
+     * @return BelongsTo<Company, $this>
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     /**
      * Get the property that owns the unit.

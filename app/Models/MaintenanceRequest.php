@@ -8,10 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-#[Fillable(['unit_id', 'tenant_id', 'assigned_to', 'title', 'description', 'priority', 'status', 'estimated_cost', 'actual_cost', 'resolved_at'])]
+#[Fillable(['unit_id', 'tenant_id', 'assigned_to', 'title', 'description', 'priority', 'status', 'estimated_cost', 'actual_cost', 'resolved_at', 'company_id'])]
 class MaintenanceRequest extends Model
 {
     use HasFactory;
+
+    /**
+     * Get the company that owns the maintenance request.
+     *
+     * @return BelongsTo<Company, $this>
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     /**
      * Get the unit.

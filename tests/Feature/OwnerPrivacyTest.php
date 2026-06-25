@@ -3,28 +3,42 @@
 use App\Enums\UserRole;
 use App\Filament\Portal\Resources\Remittances\Pages\ListRemittances;
 use App\Filament\Portal\Resources\Units\Pages\ListUnits;
+use App\Models\Company;
 use App\Models\Lease;
 use App\Models\Property;
 use App\Models\Remittance;
 use App\Models\Unit;
 use App\Models\UnitOwner;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
 test('owner can only see their own units and payouts in the portal', function () {
+    $company = Company::create([
+        'name' => 'Apex Management',
+        'slug' => 'apex-management',
+    ]);
+
     $ownerA = User::factory()->create(['role' => UserRole::Owner]);
     $ownerB = User::factory()->create(['role' => UserRole::Owner]);
 
     $tenant1 = User::factory()->create(['role' => UserRole::Tenant, 'name' => 'Juan Dela Cruz']);
     $tenant2 = User::factory()->create(['role' => UserRole::Tenant, 'name' => 'Jose Rizal']);
 
-    $property = Property::create(['name' => 'Ayala Heights', 'address' => 'Makati']);
+    $company->users()->attach([$ownerA->id, $ownerB->id, $tenant1->id, $tenant2->id]);
+
+    $property = Property::create([
+        'company_id' => $company->id,
+        'name' => 'Ayala Heights',
+        'address' => 'Makati',
+    ]);
 
     // Unit 1 owned by Owner A
     $unit1 = Unit::create([
+        'company_id' => $company->id,
         'property_id' => $property->id,
         'unit_number' => '101',
         'type' => 'condo',
@@ -39,6 +53,7 @@ test('owner can only see their own units and payouts in the portal', function ()
         'share_percentage' => 100.00,
     ]);
     Lease::create([
+        'company_id' => $company->id,
         'unit_id' => $unit1->id,
         'tenant_id' => $tenant1->id,
         'start_date' => '2026-01-01',
@@ -50,6 +65,7 @@ test('owner can only see their own units and payouts in the portal', function ()
 
     // Unit 2 owned by Owner B
     $unit2 = Unit::create([
+        'company_id' => $company->id,
         'property_id' => $property->id,
         'unit_number' => '102',
         'type' => 'condo',
@@ -64,6 +80,7 @@ test('owner can only see their own units and payouts in the portal', function ()
         'share_percentage' => 100.00,
     ]);
     Lease::create([
+        'company_id' => $company->id,
         'unit_id' => $unit2->id,
         'tenant_id' => $tenant2->id,
         'start_date' => '2026-01-01',
@@ -75,6 +92,7 @@ test('owner can only see their own units and payouts in the portal', function ()
 
     // Remittance for Owner A
     $remitA = Remittance::create([
+        'company_id' => $company->id,
         'owner_id' => $ownerA->id,
         'unit_id' => $unit1->id,
         'remittance_date' => '2026-06-28',
@@ -84,6 +102,7 @@ test('owner can only see their own units and payouts in the portal', function ()
 
     // Remittance for Owner B
     $remitB = Remittance::create([
+        'company_id' => $company->id,
         'owner_id' => $ownerB->id,
         'unit_id' => $unit2->id,
         'remittance_date' => '2026-06-28',
@@ -93,6 +112,8 @@ test('owner can only see their own units and payouts in the portal', function ()
 
     // Log in as Owner A
     $this->actingAs($ownerA);
+    Filament::setCurrentPanel(Filament::getPanel('portal'));
+    Filament::setTenant($company);
 
     // Verify Units table shows only Unit 1
     Livewire::test(ListUnits::class)
@@ -106,6 +127,11 @@ test('owner can only see their own units and payouts in the portal', function ()
 });
 
 test('owner cannot view sensitive tenant contact info', function () {
+    $company = Company::create([
+        'name' => 'Apex Management',
+        'slug' => 'apex-management',
+    ]);
+
     $owner = User::factory()->create(['role' => UserRole::Owner]);
     $tenant = User::factory()->create([
         'role' => UserRole::Tenant,
@@ -113,8 +139,15 @@ test('owner cannot view sensitive tenant contact info', function () {
         'email' => 'tenant@private.com',
     ]);
 
-    $property = Property::create(['name' => 'Ayala Heights', 'address' => 'Makati']);
+    $company->users()->attach([$owner->id, $tenant->id]);
+
+    $property = Property::create([
+        'company_id' => $company->id,
+        'name' => 'Ayala Heights',
+        'address' => 'Makati',
+    ]);
     $unit = Unit::create([
+        'company_id' => $company->id,
         'property_id' => $property->id,
         'unit_number' => '101',
         'type' => 'condo',
@@ -129,6 +162,7 @@ test('owner cannot view sensitive tenant contact info', function () {
         'share_percentage' => 100.00,
     ]);
     Lease::create([
+        'company_id' => $company->id,
         'unit_id' => $unit->id,
         'tenant_id' => $tenant->id,
         'start_date' => '2026-01-01',
@@ -139,6 +173,8 @@ test('owner cannot view sensitive tenant contact info', function () {
     ]);
 
     $this->actingAs($owner);
+    Filament::setCurrentPanel(Filament::getPanel('portal'));
+    Filament::setTenant($company);
 
     // Verify list displays tenant name but does not leak email
     Livewire::test(ListUnits::class)

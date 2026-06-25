@@ -9,10 +9,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-#[Fillable(['unit_id', 'tenant_id', 'start_date', 'end_date', 'rent_amount', 'security_deposit', 'status', 'move_in_date', 'move_out_date', 'terms'])]
+#[Fillable(['unit_id', 'tenant_id', 'start_date', 'end_date', 'rent_amount', 'security_deposit', 'status', 'move_in_date', 'move_out_date', 'terms', 'company_id'])]
 class Lease extends Model
 {
     use HasFactory;
+
+    /**
+     * Get the company that owns the lease.
+     *
+     * @return BelongsTo<Company, $this>
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     /**
      * Get the unit associated with the lease.

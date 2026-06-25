@@ -8,10 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-#[Fillable(['documentable_type', 'documentable_id', 'title', 'file_path', 'document_type', 'uploaded_by'])]
+#[Fillable(['documentable_type', 'documentable_id', 'title', 'file_path', 'document_type', 'uploaded_by', 'company_id'])]
 class Document extends Model
 {
     use HasFactory;
+
+    /**
+     * Get the company that owns the document.
+     *
+     * @return BelongsTo<Company, $this>
+     */
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     /**
      * Get the owning documentable model.

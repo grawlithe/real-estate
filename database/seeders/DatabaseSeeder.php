@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\UserRole;
+use App\Models\Company;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Lease;
@@ -27,6 +28,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // 0. Create Companies (PMC Tenants)
+        $apexCompany = Company::create([
+            'name' => 'Apex Management',
+            'slug' => 'apex-management',
+        ]);
+
+        $greenhillsCompany = Company::create([
+            'name' => 'Greenhills Agency',
+            'slug' => 'greenhills-agency',
+        ]);
+
         // 1. Create Staff Members (Admins)
         $superAdmin = User::create([
             'name' => 'Super Admin User',
@@ -64,6 +76,10 @@ class DatabaseSeeder extends Seeder
             'kyc_data' => ['id_type' => 'Drivers License', 'id_number' => 'D01-23-456789'],
         ]);
 
+        // Associate staff with companies
+        $apexCompany->users()->attach([$superAdmin->id, $manager->id, $accountant->id, $agent->id]);
+        $greenhillsCompany->users()->attach([$superAdmin->id]);
+
         // 2. Create Clients - Owners
         $owner1 = User::create([
             'name' => 'Enrique Zobel',
@@ -82,6 +98,9 @@ class DatabaseSeeder extends Seeder
             'kyc_status' => 'verified',
             'kyc_data' => ['id_type' => 'UMID', 'id_number' => '222-444-666'],
         ]);
+
+        // Associate owners with companies
+        $apexCompany->users()->attach([$owner1->id, $owner2->id]);
 
         // 3. Create Clients - Tenants
         $tenant1 = User::create([
@@ -111,17 +130,23 @@ class DatabaseSeeder extends Seeder
             'kyc_data' => ['id_type' => 'Postal ID', 'id_number' => 'POSTAL-9988'],
         ]);
 
+        // Associate tenants with companies
+        $apexCompany->users()->attach([$tenant1->id, $tenant2->id]);
+        $greenhillsCompany->users()->attach([$tenant3->id]);
+
         // 4. Create Properties
         $prop1 = Property::create([
             'name' => 'Ayala Heights Condominium',
             'address' => 'Ayala Avenue, Makati City, Metro Manila',
             'description' => 'A luxury high-rise condominium complex in the heart of Makati CBD.',
+            'company_id' => $apexCompany->id,
         ]);
 
         $prop2 = Property::create([
             'name' => 'Greenhills Residences',
             'address' => 'Ortigas Ave, San Juan, Metro Manila',
             'description' => 'Elegant townhouse enclave with active security and beautiful green parks.',
+            'company_id' => $greenhillsCompany->id,
         ]);
 
         // 5. Create Units
@@ -134,6 +159,7 @@ class DatabaseSeeder extends Seeder
             'ownership_type' => 'company_owned',
             'rent_amount' => 45000.00,
             'security_deposit' => 90000.00,
+            'company_id' => $apexCompany->id,
         ]);
 
         // Unit 2: Ayala Heights - 102, Condo, occupied, managed, Owner: Enrique Zobel
@@ -145,6 +171,7 @@ class DatabaseSeeder extends Seeder
             'ownership_type' => 'managed',
             'rent_amount' => 55000.00,
             'security_deposit' => 110000.00,
+            'company_id' => $apexCompany->id,
         ]);
         UnitOwner::create([
             'unit_id' => $unit2->id,
@@ -162,6 +189,7 @@ class DatabaseSeeder extends Seeder
             'ownership_type' => 'managed',
             'rent_amount' => 60000.00,
             'security_deposit' => 120000.00,
+            'company_id' => $apexCompany->id,
         ]);
         UnitOwner::create([
             'unit_id' => $unit3->id,
@@ -179,6 +207,7 @@ class DatabaseSeeder extends Seeder
             'ownership_type' => 'company_owned',
             'rent_amount' => 120000.00,
             'security_deposit' => 240000.00,
+            'company_id' => $greenhillsCompany->id,
         ]);
 
         // Unit 5: Greenhills Residences - Unit B, House, occupied, company owned
@@ -190,6 +219,7 @@ class DatabaseSeeder extends Seeder
             'ownership_type' => 'company_owned',
             'rent_amount' => 130000.00,
             'security_deposit' => 260000.00,
+            'company_id' => $greenhillsCompany->id,
         ]);
 
         // Unit 6: Greenhills Residences - Unit C, House, under_maintenance, company owned
@@ -201,6 +231,7 @@ class DatabaseSeeder extends Seeder
             'ownership_type' => 'company_owned',
             'rent_amount' => 110000.00,
             'security_deposit' => 220000.00,
+            'company_id' => $greenhillsCompany->id,
         ]);
 
         // 6. Create Leases
@@ -215,6 +246,7 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'move_in_date' => '2026-01-01',
             'terms' => 'Standard residential lease agreement. Pet friendly.',
+            'company_id' => $apexCompany->id,
         ]);
 
         // Lease 2: Unit 3 occupied by Tenant 2 (Jose)
@@ -228,6 +260,7 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'move_in_date' => '2026-02-01',
             'terms' => 'Two months security deposit, one month advance.',
+            'company_id' => $apexCompany->id,
         ]);
 
         // Lease 3: Unit 5 occupied by Tenant 3 (Andres)
@@ -241,6 +274,7 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
             'move_in_date' => '2026-03-01',
             'terms' => 'Corporate lease agreement.',
+            'company_id' => $greenhillsCompany->id,
         ]);
 
         // 7. Invoices, Payments, & Remittances
@@ -265,6 +299,7 @@ class DatabaseSeeder extends Seeder
                 'status' => $isPaid ? 'paid' : 'unpaid',
                 'type' => 'rent',
                 'notes' => "{$name} 2026 Monthly Rent Invoice",
+                'company_id' => $apexCompany->id,
             ]);
 
             if ($isPaid) {
@@ -275,6 +310,7 @@ class DatabaseSeeder extends Seeder
                     'payment_method' => $num % 2 === 0 ? 'bank_transfer' : 'gcash',
                     'transaction_reference' => 'TXN'.rand(1000000, 9999999),
                     'status' => 'approved',
+                    'company_id' => $apexCompany->id,
                 ]);
 
                 // Create Remittance for Enrique Zobel
@@ -288,6 +324,7 @@ class DatabaseSeeder extends Seeder
                     'remittance_date' => "2026-{$num}-28",
                     'amount' => $remitAmount,
                     'status' => 'transferred',
+                    'company_id' => $apexCompany->id,
                 ]);
             }
         }
@@ -315,6 +352,7 @@ class DatabaseSeeder extends Seeder
                 'type' => 'rent',
                 'late_fee_applied' => $isOverdue ? 1500.00 : 0.00,
                 'notes' => "{$name} 2026 Monthly Rent Invoice",
+                'company_id' => $apexCompany->id,
             ]);
 
             if ($isPaid) {
@@ -325,6 +363,7 @@ class DatabaseSeeder extends Seeder
                     'payment_method' => $num % 2 === 0 ? 'bank_transfer' : 'maya',
                     'transaction_reference' => 'TXN'.rand(1000000, 9999999),
                     'status' => 'approved',
+                    'company_id' => $apexCompany->id,
                 ]);
 
                 // Create Remittance for Maria Ayala
@@ -338,6 +377,7 @@ class DatabaseSeeder extends Seeder
                     'remittance_date' => "2026-{$num}-28",
                     'amount' => $remitAmount,
                     'status' => 'transferred',
+                    'company_id' => $apexCompany->id,
                 ]);
             }
         }
@@ -361,6 +401,7 @@ class DatabaseSeeder extends Seeder
                 'status' => $isPaid ? 'paid' : 'unpaid',
                 'type' => 'rent',
                 'notes' => "{$name} 2026 Monthly Rent Invoice",
+                'company_id' => $greenhillsCompany->id,
             ]);
         }
 
@@ -372,6 +413,7 @@ class DatabaseSeeder extends Seeder
             'expense_date' => '2026-01-15',
             'description' => 'Repaired kitchen pipe leak and replaced faucet fittings.',
             'paid_by' => 'company', // will be deducted from owner's remittance
+            'company_id' => $apexCompany->id,
         ]);
 
         Expense::create([
@@ -381,6 +423,7 @@ class DatabaseSeeder extends Seeder
             'expense_date' => '2026-02-20',
             'description' => 'Repaired bedroom circuit breaker and light switch replacement.',
             'paid_by' => 'owner',
+            'company_id' => $apexCompany->id,
         ]);
 
         Expense::create([
@@ -390,6 +433,7 @@ class DatabaseSeeder extends Seeder
             'expense_date' => '2026-05-10',
             'description' => 'Interior repainting and general floor polishing under maintenance.',
             'paid_by' => 'company',
+            'company_id' => $greenhillsCompany->id,
         ]);
 
         // 9. Maintenance Request Tickets
@@ -404,6 +448,7 @@ class DatabaseSeeder extends Seeder
             'estimated_cost' => 4000.00,
             'actual_cost' => 3500.00,
             'resolved_at' => Carbon::parse('2026-01-15 14:00:00'),
+            'company_id' => $apexCompany->id,
         ]);
 
         MaintenanceRequest::create([
@@ -414,6 +459,7 @@ class DatabaseSeeder extends Seeder
             'description' => 'The split type aircon runs but only blows fan air. It might need a cleaning or freon refill.',
             'priority' => 'high',
             'status' => 'pending',
+            'company_id' => $apexCompany->id,
         ]);
     }
 }
