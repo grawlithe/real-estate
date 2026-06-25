@@ -93,3 +93,28 @@ test('owner can access portal panel', function () {
         ->get('/portal')
         ->assertSuccessful();
 });
+
+test('guest is redirected to platform login', function () {
+    $this->get('/platform')
+        ->assertRedirect('/platform/login');
+});
+
+test('non-super admin cannot access platform panel', function () {
+    $manager = User::factory()->create([
+        'role' => UserRole::PropertyManager,
+    ]);
+
+    $this->actingAs($manager)
+        ->get('/platform')
+        ->assertForbidden();
+});
+
+test('super admin can access platform panel', function () {
+    $admin = User::factory()->create([
+        'role' => UserRole::SuperAdmin,
+    ]);
+
+    $this->actingAs($admin)
+        ->get('/platform')
+        ->assertSuccessful();
+});
